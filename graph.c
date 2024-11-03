@@ -48,6 +48,7 @@ void addEdge(Graph *graph, int userId, int itemId, int rating) {
     }
 
     Edge *newEdge = (Edge *)malloc(sizeof(Edge));
+    newEdge->userId = userId;
     newEdge->itemId = itemId;
     newEdge->rating = rating;
     newEdge->nextEdge = user->edges;
