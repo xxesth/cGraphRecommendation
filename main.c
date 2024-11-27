@@ -9,7 +9,7 @@ int main() {
     
 
     // Free allocated memory and clean up (not shown)
-    freeGraph(graph);
+//    freeGraph(graph);
 
     return 0;
 }

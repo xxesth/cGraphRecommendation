@@ -39,11 +39,19 @@ void addItem(Graph *graph, int itemId) {
 // Add an edge from a user to an item with a given rating
 void addEdge(Graph *graph, int userId, int itemId, int rating) {
     Node *user = graph->users;
+    Node *item = graph->items;
     while (user && user->id != userId) {
         user = user->next;
     }
     if (!user) {
         printf("User ID %d not found!\n", userId);
+        return;
+    }
+    while (item && item->id != itemId){
+        item = item->next;
+    }
+    if(!item){
+        printf("Item ID %d not found!\n", itemId);
         return;
     }
 
@@ -52,7 +60,9 @@ void addEdge(Graph *graph, int userId, int itemId, int rating) {
     newEdge->itemId = itemId;
     newEdge->rating = rating;
     newEdge->nextEdge = user->edges;
+    newEdge->nextEdge = item->edges;
     user->edges = newEdge;
+    item->edges = newEdge;
 
     printf("Added edge from user %d to item %d with rating %d\n", userId, itemId, rating);
 }
@@ -115,7 +125,7 @@ void deleteItem(Graph *graph, int itemId) {
 // Print graph for debugging
 void printGraph(Graph *graph) {
     Node *user = graph->users;
-    printf("Users:\n");
+    printf("\n\nUsers:\n\n");
     while (user) {
         printf("User ID: %d\n", user->id);
         Edge *edge = user->edges;
@@ -125,6 +135,32 @@ void printGraph(Graph *graph) {
         }
         user = user->next;
     }
+
+    Node *item = graph->items;
+    printf("\n\nItems:\n\n");
+    while(item){
+        printf("Item ID: %d\n", item->id);
+        Edge *edge2 = item->edges;
+        while(edge2){
+            printf("  -> User ID: %d, Rating: %d\n", edge2->userId, edge2->rating);
+            edge2 = edge2->nextEdge;
+        }
+        item = item->next;
+    }
+  
+    Node *best = graph->users;
+    Node *test = graph->items;
+    printf("\n\nTEST USERS\n\n");
+    while(best){
+       printf("%d ", best->id);
+       best = best->next;
+    }
+    printf("\n\nTEST ITEMS\n\n");
+    while(test){
+        printf("%d ", test->id);
+        test = test->next;
+    }
+
 }
 
 // Parse the u.data file to populate the graph
@@ -185,7 +221,6 @@ void freeEdges(Edge *edge) {
 void freeNodes(Node *node) {
     while (node) {
         Node *temp = node;
-        freeEdges(temp->edges); // Free edges first
         node = node->next;
         free(temp);
     }
@@ -195,5 +230,6 @@ void freeNodes(Node *node) {
 void freeGraph(Graph *graph) {
     freeNodes(graph->users);
     freeNodes(graph->items);
-    free(graph); // Free the graph structure itself
+    freeEdges(graph->users->edges);
+    free(graph); 
 }

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 typedef struct Edge {
+    int userId;
     int itemId;            // ID of the item (movie) in this edge
     int rating;            // Rating given by the user for the item
     struct Edge *nextEdge; // Pointer to the next edge
