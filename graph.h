@@ -24,6 +24,8 @@ typedef struct Graph {
 // Function prototypes
 Graph *createGraph();
 Node *createNode(int id);
+Node *findNode(Node *head, int id);
+int countNodes(Node *head);
 void addUser(Graph *graph, int userId);
 void addItem(Graph *graph, int itemId);
 void addEdge(Graph *graph, int userId, int itemId, int rating);
@@ -31,11 +33,16 @@ int degreeOfVertex(Graph *graph, int userId);
 void deleteUser(Graph *graph, int userId);
 void deleteItem(Graph *graph, int itemId);
 void printGraph(Graph *graph);
+void printEdges(Node *node);
 void parseDataFile(Graph *graph, const char *filename);
 void removeEdgesForItem(Graph *graph, int itemId);
 void freeEdges(Edge *edge);
 void freeNodes(Node *node);
 void freeGraph(Graph *graph);
 
-#endif // GRAPH_H
+void recommendRandomMovie(Graph *graph, int userId);
+void recommendTopRatedMovies(Graph *graph, int userId, int n);
+void recommendBasedOnSimilarUser(Graph *graph, int userId, int n);
+void recommendClosestMovies(Graph *graph, int userId, int n);
 
+#endif // GRAPH_H
