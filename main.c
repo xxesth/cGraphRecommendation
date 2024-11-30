@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "graph.h"
+#include "recommendation.h"
 
 #define DATA_ADDRESS "./ml-100k/u.data"
 #define RECOMMEND_TO_USER 53
