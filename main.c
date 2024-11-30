@@ -22,6 +22,9 @@ int main() {
     recommendBasedOnSimilarUser(graph, RECOMMEND_TO_USER, NUMBER_OF_MOVIES);
     recommendClosestMovies(graph, RECOMMEND_TO_USER, NUMBER_OF_MOVIES);
 
+    NeuralNetwork *nn;
+    recommendMovies(nn, RECOMMEND_TO_USER, NUMBER_OF_MOVIES, graph);
+
     freeGraph(graph);
 
     return 0;
