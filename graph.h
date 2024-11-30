@@ -40,9 +40,4 @@ void freeEdges(Edge *edge);
 void freeNodes(Node *node);
 void freeGraph(Graph *graph);
 
-void recommendRandomMovie(Graph *graph, int userId);
-void recommendTopRatedMovies(Graph *graph, int userId, int n);
-void recommendBasedOnSimilarUser(Graph *graph, int userId, int n);
-void recommendClosestMovies(Graph *graph, int userId, int n);
-
 #endif // GRAPH_H
