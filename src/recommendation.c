@@ -147,6 +147,7 @@ void recommendBasedOnSimilarUser(Graph *graph, int userId, int n) {
 
     // Find the most similar user
     int maxCommonMovies = 0;
+    int maxSimilarity = 0;
     Node *mostSimilarUser = NULL;
 
     Node *otherUser = graph->users;
@@ -154,6 +155,7 @@ void recommendBasedOnSimilarUser(Graph *graph, int userId, int n) {
         if (otherUser->id != userId) {
             // Count common movies
             int commonMovies = 0;
+            int similarity = 0;
             Edge *userEdge = user->edges;
             while (userEdge) {
                 Edge *otherUserEdge = otherUser->edges;
@@ -161,6 +163,12 @@ void recommendBasedOnSimilarUser(Graph *graph, int userId, int n) {
                     if (userEdge->itemId == otherUserEdge->itemId) {
 //TEST                        printf("count: %d itemid: %d userid: %d\n", commonMovies, otherUserEdge->itemId, otherUserEdge->userId);
                         commonMovies++;
+                        if (userEdge->rating >= otherUserEdge->rating){
+                            similarity += 6 - (userEdge->rating - otherUserEdge->rating);
+                        }else if (userEdge->rating < otherUserEdge->rating){
+                            similarity += 6 - (otherUserEdge->rating - userEdge->rating);
+                        }
+
                        // otherUserEdge = otherUserEdge->nextEdge;
                         break;
                     }
@@ -170,7 +178,8 @@ void recommendBasedOnSimilarUser(Graph *graph, int userId, int n) {
             }
 
             // Update the most similar user
-            if (commonMovies > maxCommonMovies) {
+            if (similarity > maxSimilarity) {
+                maxSimilarity = similarity;
                 maxCommonMovies = commonMovies;
                 mostSimilarUser = otherUser;
             }
@@ -188,8 +197,8 @@ void recommendBasedOnSimilarUser(Graph *graph, int userId, int n) {
     //printEdges(mostSimilarUser);
     
     // Recommend movies based on the most similar user
-    printf("Most similar user to user %d is user %d with %d common movies.\n",
-           userId, mostSimilarUser->id, maxCommonMovies);
+    printf("Most similar user to user %d is user %d with %d common movies and %d similarity score.\n",
+           userId, mostSimilarUser->id, maxCommonMovies, maxSimilarity);
 
     // Find top N recommendations
     int (*topMovies)[2] = malloc(n * sizeof(int[2]));
