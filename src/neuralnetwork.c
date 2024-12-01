@@ -6,22 +6,22 @@
 #include "neuralnetwork.h"
 
 // Checks if there is an edge between a user and an item
-bool hasEdge(Node *user, int userId, int itemId) {
-    Node *current = user;
-    while (current) {
-        if (current->id == userId) {
-            Edge *edge = current->edges;
-            while (edge) {
-                if (edge->itemId == itemId) {
-                    return true;
-                }
-                edge = edge->nextEdge;
-            }
-        }
-        current = current->next;
-    }
-    return false;
-}
+//bool hasEdge(Node *user, int userId, int itemId) {
+//    Node *current = user;
+//    while (current) {
+//        if (current->id == userId) {
+//            Edge *edge = current->edges;
+//            while (edge) {
+//                if (edge->itemId == itemId) {
+//                    return true;
+//                }
+//                edge = edge->nextEdge;
+//            }
+//        }
+//        current = current->next;
+//    }
+//    return false;
+//}
 
 void initializeNetwork(NeuralNetwork *nn) {
     srand(time(NULL));

@@ -26,6 +26,7 @@ Graph *createGraph();
 Node *createNode(int id);
 Node *findNode(Node *head, int id);
 int countNodes(Node *head);
+int hasEdge(Node *node, int itemId);
 void addUser(Graph *graph, int userId);
 void addItem(Graph *graph, int itemId);
 void addEdge(Graph *graph, int userId, int itemId, int rating);
