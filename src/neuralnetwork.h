@@ -1,7 +1,5 @@
-#ifndef RECOMMENDATION_H
-#define RECOMMENDATION_H
-
-#include "graph.h"
+#ifndef NEURALNETWORK_H
+#define NEURALNETWORK_H
 
 #define INPUT_NODES 3   // userId, itemId, rating
 #define HIDDEN_NODES 128
@@ -21,11 +19,4 @@ void forward(NeuralNetwork *nn, double inputs[INPUT_NODES], double *output);
 void train(NeuralNetwork *nn, double inputs[INPUT_NODES], double target, double learning_rate);
 void trainNetwork(NeuralNetwork *nn, double dataset[][3], int dataset_size, double learning_rate, int epochs);
 
-void recommendRandomMovie(Graph *graph, int userId);
-void recommendTopRatedMovies(Graph *graph, int userId, int n);
-void recommendBasedOnSimilarUser(Graph *graph, int userId, int n);
-void recommendClosestMovies(Graph *graph, int userId, int n);
-void recommendMovies(NeuralNetwork *nn, int userId, int n, Graph *graph);
-
-#endif
-
+#endif // NEURALNETWORK_H

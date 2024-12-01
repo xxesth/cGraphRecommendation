@@ -1,6 +1,6 @@
-#include <stdio.h>
 #include "graph.h"
 #include "recommendation.h"
+#include "neuralnetwork.h"
 
 #define DATA_ADDRESS "./ml-100k/u.data"
 #define RECOMMEND_TO_USER 53
@@ -8,13 +8,9 @@
 
 int main() {
     Graph *graph = createGraph();
-    parseDataFile(graph, DATA_ADDRESS); // Replace with your actual data file path
+    parseDataFile(graph, DATA_ADDRESS); 
 
     printGraph(graph);
-    
-    //TEST
-    //Node *user = findNode(graph->users, RECOMMEND_TO_USER);
-    //printEdges(user);
     
     //Recommendations
     recommendRandomMovie(graph, RECOMMEND_TO_USER);
@@ -22,8 +18,7 @@ int main() {
     recommendBasedOnSimilarUser(graph, RECOMMEND_TO_USER, NUMBER_OF_MOVIES);
     recommendClosestMovies(graph, RECOMMEND_TO_USER, NUMBER_OF_MOVIES);
 
-    NeuralNetwork *nn;
-    recommendMovies(nn, RECOMMEND_TO_USER, NUMBER_OF_MOVIES, graph);
+    //recommendMovies(nn, RECOMMEND_TO_USER, NUMBER_OF_MOVIES, graph);
 
     freeGraph(graph);
 

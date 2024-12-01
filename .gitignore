@@ -1,2 +1,13 @@
 # ignore .out files
 *.out
+
+# Compiled binaries
+build/
+
+# Temporary files
+*.o
+*.swp
+*.tmp
+*.log
+*.bak
+*.txt
