@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "graph.h"
 #include "recommendation.h"
 #include "neuralnetwork.h"

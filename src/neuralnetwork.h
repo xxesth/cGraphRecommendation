@@ -12,7 +12,7 @@ typedef struct {
     double biases_output[OUTPUT_NODES];
 } NeuralNetwork;
 
-bool hasEdge(Node *user, int userId, int itemId);
+//bool hasEdge(Node *user, int userId, int itemId);
 void initializeNetwork(NeuralNetwork *nn);
 double sigmoid(double x);
 void forward(NeuralNetwork *nn, double inputs[INPUT_NODES], double *output);

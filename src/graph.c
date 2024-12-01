@@ -40,6 +40,21 @@ int countNodes(Node *head) {
     return count;
 }
 
+int hasEdge(Node *node, int itemId) {
+    // Traverse the edge list of the node (which is a user or item)
+    Edge *currentEdge = node->edges;
+    
+    while (currentEdge != NULL) {
+        // Check if the current edge's itemId matches the given itemId
+        if (currentEdge->itemId == itemId) {
+            return 1;  // Edge exists, meaning the user has rated the item
+        }
+        currentEdge = currentEdge->nextEdge;  // Move to the next edge
+    }
+
+    return 0;  // No edge found, meaning the user has not rated the item
+}
+
 // Add a new user to the graph
 void addUser(Graph *graph, int userId) {
     Node *newUser = createNode(userId);
