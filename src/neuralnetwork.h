@@ -1,22 +1,21 @@
 #ifndef NEURALNETWORK_H
 #define NEURALNETWORK_H
 
-#define INPUT_NODES 3   // userId, itemId, rating
-#define HIDDEN_NODES 128
-#define OUTPUT_NODES 1  // Predicted rating
-
-typedef struct {
-    double weights_input_hidden[INPUT_NODES][HIDDEN_NODES];
-    double weights_hidden_output[HIDDEN_NODES][OUTPUT_NODES];
-    double biases_hidden[HIDDEN_NODES];
-    double biases_output[OUTPUT_NODES];
+typedef struct NeuralNetwork {
+    int inputSize;       // Number of input features
+    int hiddenSize;      // Number of neurons in the hidden layer
+    int outputSize;      // Output size (single value for predicted rating)
+    double **weights1;   // Weights from input to hidden layer
+    double *bias1;       // Bias for the hidden layer
+    double **weights2;   // Weights from hidden to output layer
+    double bias2;        // Bias for the output layer
+    double learningRate; // Learning rate for training
 } NeuralNetwork;
 
-//bool hasEdge(Node *user, int userId, int itemId);
-void initializeNetwork(NeuralNetwork *nn);
-double sigmoid(double x);
-void forward(NeuralNetwork *nn, double inputs[INPUT_NODES], double *output);
-void train(NeuralNetwork *nn, double inputs[INPUT_NODES], double target, double learning_rate);
-void trainNetwork(NeuralNetwork *nn, double dataset[][3], int dataset_size, double learning_rate, int epochs);
+// Function declarations
+NeuralNetwork *createNeuralNetwork(int inputSize, int hiddenSize, int outputSize, double learningRate);
+void trainNeuralNetwork(NeuralNetwork *nn, double **inputs, double *targets, int dataSize, int epochs);
+double predict(NeuralNetwork *nn, double *input);
+void freeNeuralNetwork(NeuralNetwork *nn);
 
 #endif // NEURALNETWORK_H
