@@ -256,98 +256,6 @@ void recommendBasedOnSimilarUser(Graph *graph, int userId, int n) {
     free(topMovies);
 }
 
-void oldrecommendClosestMovies(Graph *graph, int userId, int n) {
-    Node *user = findNode(graph->users, userId);
-    if (!user) {
-        printf("User with ID %d not found.\n", userId);
-        return;
-    }
-
-    int totalMovies = countNodes(graph->items); // Get the total number of items
-    double *distances = malloc(totalMovies * sizeof(double));
-    int *visited = malloc(totalMovies * sizeof(int));
-
-    // Initialize distances and visited array
-    for (int i = 0; i < totalMovies; i++) {
-        distances[i] = DBL_MAX;
-        visited[i] = 0;
-    }
-
-    // Traverse the graph from the user's rated movies
-    Edge *userEdge = user->edges;
-    while (userEdge) {
-        int movieId = userEdge->itemId;
-
-        Node *movieNode = findNode(graph->items, movieId);
-        if (movieNode) {
-            Edge *otherUserEdge = movieNode->edges;
-
-            // Visit other users who rated this movie
-            while (otherUserEdge) {
-                Node *otherUser = findNode(graph->users, otherUserEdge->itemId);
-                if (otherUser && otherUser->id != userId) {
-                    Edge *otherUserMovieEdge = otherUser->edges;
-
-                    // Explore movies rated by the other user
-                    while (otherUserMovieEdge) {
-                        int otherMovieId = otherUserMovieEdge->itemId;
-
-                        // Calculate the inverted rating as the distance weight
-                        double rating = otherUserMovieEdge->rating;
-                        double distance = (rating > 0) ? 1.0 / rating : DBL_MAX;
-
-                        // Update distance if it is smaller
-                        if (!visited[otherMovieId - 1] && distance < distances[otherMovieId - 1]) {
-                            distances[otherMovieId - 1] = distance;
-                        }
-
-                        otherUserMovieEdge = otherUserMovieEdge->nextEdge;
-                    }
-                }
-                otherUserEdge = otherUserEdge->nextEdge;
-            }
-        }
-
-        userEdge = userEdge->nextEdge;
-    }
-
-    // Find the top N recommendations
-    int *topMovies = malloc(n * sizeof(int));
-    for (int i = 0; i < n; i++) {
-        topMovies[i] = -1;
-    }
-
-    for (int i = 0; i < totalMovies; i++) {
-        if (distances[i] != DBL_MAX && !visited[i]) {
-            for (int j = 0; j < n; j++) {
-                if (topMovies[j] == -1 || distances[i] < distances[topMovies[j] - 1]) {
-                    // Shift lower-ranked movies
-                    for (int k = n - 1; k > j; k--) {
-                        topMovies[k] = topMovies[k - 1];
-                    }
-                    topMovies[j] = i + 1; // Store movie ID
-                    break;
-                }
-            }
-        }
-    }
-
-    // Print recommendations
-    printf("Top %d closest movie recommendations for user %d:\n", n, userId);
-    for (int i = 0; i < n; i++) {
-        if (topMovies[i] != -1) {
-            printf("  Movie ID: %d (Proximity: %.2f)\n", topMovies[i], distances[topMovies[i] - 1]);
-        } else {
-            printf("  No more recommendations available.\n");
-        }
-    }
-
-    // Free allocated memory
-    free(distances);
-    free(visited);
-    free(topMovies);
-}
-
 // Helper function to find the node with the smallest distance
 static int findMinDistanceNode(int *distances, int *visited, int totalNodes) {
     int minDistance = INT_MAX;
@@ -365,7 +273,6 @@ static int findMinDistanceNode(int *distances, int *visited, int totalNodes) {
 
 // Dijkstra's algorithm
 int *dijkstra(Graph *graph, Node *startNode) {
-    printf("aa");
     int totalNodes = countNodes(graph->items); // Use countNodes instead of graph->items
     int *distances = malloc(totalNodes * sizeof(int));
     int *visited = calloc(totalNodes, sizeof(int));
@@ -384,7 +291,6 @@ int *dijkstra(Graph *graph, Node *startNode) {
         Node *current = findNode(graph->items, currentNode);
         Edge *edge = current->edges;
 
-        printf("buraya geldi");
         while (edge) {
             int neighbor = edge->itemId;
             if (!visited[neighbor] && distances[currentNode] != INT_MAX) {
@@ -419,7 +325,9 @@ void recommendClosestMovies(Graph *graph, int userId, int n) {
 
     for (int i = 0; i < totalItems; i++) {
         Node *itemNode = findNode(graph->items, i);
-        printf("3");
+        if (itemNode == NULL){
+            continue;
+        }
         if (!hasEdge(userNode, itemNode->id)) { // Check if the user has rated this movie
             for (int j = 0; j < n; j++) {
                 if (recommendedMovies[j] == -1 || distances[i] < distances[recommendedMovies[j]]) {
