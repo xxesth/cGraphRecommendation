@@ -1,111 +1,144 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <math.h>
-#include "graph.h"
 #include "neuralnetwork.h"
 
-// Checks if there is an edge between a user and an item
-//bool hasEdge(Node *user, int userId, int itemId) {
-//    Node *current = user;
-//    while (current) {
-//        if (current->id == userId) {
-//            Edge *edge = current->edges;
-//            while (edge) {
-//                if (edge->itemId == itemId) {
-//                    return true;
-//                }
-//                edge = edge->nextEdge;
-//            }
-//        }
-//        current = current->next;
-//    }
-//    return false;
-//}
-
-void initializeNetwork(NeuralNetwork *nn) {
-    srand(time(NULL));
-    for (int i = 0; i < INPUT_NODES; i++) {
-        for (int j = 0; j < HIDDEN_NODES; j++) {
-            nn->weights_input_hidden[i][j] = (double)rand() / RAND_MAX - 0.5;
-        }
-    }
-    for (int i = 0; i < HIDDEN_NODES; i++) {
-        nn->biases_hidden[i] = (double)rand() / RAND_MAX - 0.5;
-        for (int j = 0; j < OUTPUT_NODES; j++) {
-            nn->weights_hidden_output[i][j] = (double)rand() / RAND_MAX - 0.5;
-        }
-    }
-    for (int i = 0; i < OUTPUT_NODES; i++) {
-        nn->biases_output[i] = (double)rand() / RAND_MAX - 0.5;
-    }
+// Helper function: Random initialization
+double randomWeight() {
+    return ((double)rand() / RAND_MAX) * 2 - 1; // Random value in [-1, 1]
 }
 
+// Helper function: Sigmoid activation
 double sigmoid(double x) {
-    return 1 / (1 + exp(-x));
+    return 1.0 / (1.0 + exp(-x));
 }
 
-void forward(NeuralNetwork *nn, double inputs[INPUT_NODES], double *output) {
-    double hidden_layer[HIDDEN_NODES];
+// Helper function: Derivative of sigmoid
+double sigmoidDerivative(double x) {
+    return x * (1.0 - x);
+}
 
-    // Input to Hidden Layer
-    for (int i = 0; i < HIDDEN_NODES; i++) {
-        hidden_layer[i] = nn->biases_hidden[i];
-        for (int j = 0; j < INPUT_NODES; j++) {
-            hidden_layer[i] += inputs[j] * nn->weights_input_hidden[j][i];
+// Create and initialize a neural network
+NeuralNetwork *createNeuralNetwork(int inputSize, int hiddenSize, int outputSize, double learningRate) {
+    NeuralNetwork *nn = malloc(sizeof(NeuralNetwork));
+    nn->inputSize = inputSize;
+    nn->hiddenSize = hiddenSize;
+    nn->outputSize = outputSize;
+    nn->learningRate = learningRate;
+
+    // Allocate weights and biases
+    nn->weights1 = malloc(inputSize * sizeof(double *));
+    for (int i = 0; i < inputSize; i++) {
+        nn->weights1[i] = malloc(hiddenSize * sizeof(double));
+        for (int j = 0; j < hiddenSize; j++) {
+            nn->weights1[i][j] = randomWeight();
         }
-        hidden_layer[i] = sigmoid(hidden_layer[i]);
+    }
+    nn->bias1 = malloc(hiddenSize * sizeof(double));
+    for (int i = 0; i < hiddenSize; i++) {
+        nn->bias1[i] = randomWeight();
     }
 
-    // Hidden to Output Layer
-    *output = nn->biases_output[0];
-    for (int i = 0; i < HIDDEN_NODES; i++) {
-        *output += hidden_layer[i] * nn->weights_hidden_output[i][0];
+    nn->weights2 = malloc(hiddenSize * sizeof(double *));
+    for (int i = 0; i < hiddenSize; i++) {
+        nn->weights2[i] = malloc(outputSize * sizeof(double));
+        for (int j = 0; j < outputSize; j++) {
+            nn->weights2[i][j] = randomWeight();
+        }
     }
-    *output = sigmoid(*output) * 5; // Scale to rating range
+    nn->bias2 = randomWeight();
+
+    return nn;
 }
 
-void train(NeuralNetwork *nn, double inputs[INPUT_NODES], double target, double learning_rate) {
-    double hidden_layer[HIDDEN_NODES];
+// Train the neural network
+void trainNeuralNetwork(NeuralNetwork *nn, double **inputs, double *targets, int dataSize, int epochs) {
+    double *hiddenLayer = malloc(nn->hiddenSize * sizeof(double));
     double output;
 
-    // Forward Pass
-    forward(nn, inputs, &output);
+    for (int epoch = 0; epoch < epochs; epoch++) {
+        for (int i = 0; i < dataSize; i++) {
+            // Forward pass
+            for (int j = 0; j < nn->hiddenSize; j++) {
+                hiddenLayer[j] = nn->bias1[j];
+                for (int k = 0; k < nn->inputSize; k++) {
+                    hiddenLayer[j] += inputs[i][k] * nn->weights1[k][j];
+                }
+                hiddenLayer[j] = sigmoid(hiddenLayer[j]);
+            }
 
-    // Output Layer Error
-    double output_error = target - output;
+            output = nn->bias2;
+            for (int j = 0; j < nn->hiddenSize; j++) {
+                hiddenLayer[j] = nn->bias1[j];
+                for (int k = 0; k < nn->inputSize; k++) {
+                    // Debug statements
+                    if (inputs[i] == NULL) {
+                        printf("Inputs row %d is NULL\n", i);
+                        return; // Exit on NULL
+                    }
+                    hiddenLayer[j] += inputs[i][k] * nn->weights1[k][j];
+                }
+                hiddenLayer[j] = sigmoid(hiddenLayer[j]);
+                output = hiddenLayer[j];
+            }
 
-    // Hidden Layer Error
-    double hidden_error[HIDDEN_NODES];
-    for (int i = 0; i < HIDDEN_NODES; i++) {
-        hidden_error[i] = output_error * nn->weights_hidden_output[i][0];
-    }
+            // Calculate error
+            double error = targets[i] - output;
 
-    // Update Hidden to Output Weights
-    for (int i = 0; i < HIDDEN_NODES; i++) {
-        nn->weights_hidden_output[i][0] += learning_rate * output_error * sigmoid(hidden_layer[i]);
-    }
+            // Backpropagation
+            double outputGradient = error * sigmoidDerivative(output);
+            for (int j = 0; j < nn->hiddenSize; j++) {
+                double hiddenGradient = outputGradient * nn->weights2[j][0] * sigmoidDerivative(hiddenLayer[j]);
+                nn->weights2[j][0] += nn->learningRate * outputGradient * hiddenLayer[j];
+                nn->bias1[j] += nn->learningRate * hiddenGradient;
 
-    // Update Input to Hidden Weights
-    for (int i = 0; i < INPUT_NODES; i++) {
-        for (int j = 0; j < HIDDEN_NODES; j++) {
-            nn->weights_input_hidden[i][j] += learning_rate * hidden_error[j] * inputs[i];
+                for (int k = 0; k < nn->inputSize; k++) {
+                    nn->weights1[k][j] += nn->learningRate * hiddenGradient * inputs[i][k];
+                }
+            }
+            nn->bias2 += nn->learningRate * outputGradient;
         }
     }
 
-    // Update Biases
-    nn->biases_output[0] += learning_rate * output_error;
-    for (int i = 0; i < HIDDEN_NODES; i++) {
-        nn->biases_hidden[i] += learning_rate * hidden_error[i];
-    }
+    free(hiddenLayer);
 }
 
-void trainNetwork(NeuralNetwork *nn, double dataset[][3], int dataset_size, double learning_rate, int epochs) {
-    for (int e = 0; e < epochs; e++) {
-        for (int i = 0; i < dataset_size; i++) {
-            double inputs[INPUT_NODES] = {dataset[i][0], dataset[i][1]};
-            double target = dataset[i][2];
-            train(nn, inputs, target, learning_rate);
+// Predict using the neural network
+double predict(NeuralNetwork *nn, double *input) {
+    double *hiddenLayer = malloc(nn->hiddenSize * sizeof(double));
+    double output;
+
+    // Forward pass
+    for (int j = 0; j < nn->hiddenSize; j++) {
+        hiddenLayer[j] = nn->bias1[j];
+        for (int k = 0; k < nn->inputSize; k++) {
+            hiddenLayer[j] += input[k] * nn->weights1[k][j];
         }
+        hiddenLayer[j] = sigmoid(hiddenLayer[j]);
     }
+
+    output = nn->bias2;
+    for (int j = 0; j < nn->hiddenSize; j++) {
+        output += hiddenLayer[j] * nn->weights2[j][0];
+    }
+    output = sigmoid(output);
+
+    free(hiddenLayer);
+    return output;
+}
+
+// Free memory allocated for the neural network
+void freeNeuralNetwork(NeuralNetwork *nn) {
+    for (int i = 0; i < nn->inputSize; i++) {
+        free(nn->weights1[i]);
+    }
+    free(nn->weights1);
+    free(nn->bias1);
+
+    for (int i = 0; i < nn->hiddenSize; i++) {
+        free(nn->weights2[i]);
+    }
+    free(nn->weights2);
+
+    free(nn);
 }

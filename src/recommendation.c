@@ -6,7 +6,6 @@
 #include <float.h>
 #include <math.h>
 #include "recommendation.h"
-#include "neuralnetwork.h"
 
 void recommendRandomMovie(Graph *graph, int userId) {
     Node *user = findNode(graph->users, userId); 
@@ -326,6 +325,7 @@ void recommendClosestMovies(Graph *graph, int userId, int n) {
     for (int i = 0; i < totalItems; i++) {
         Node *itemNode = findNode(graph->items, i);
         if (itemNode == NULL){
+            printf("%d id'li item null idi");
             continue;
         }
         if (!hasEdge(userNode, itemNode->id)) { // Check if the user has rated this movie
@@ -349,33 +349,3 @@ void recommendClosestMovies(Graph *graph, int userId, int n) {
     free(recommendedMovies);
     free(distances);
 }
-
-//void recommendMovies(NeuralNetwork *nn, int userId, int n, Graph *graph) {
-//    double inputs[INPUT_NODES];
-//    double output;
-//
-//    printf("Top %d recommendations for user %d:\n", n, userId);
-//
-//    Node *item = graph->items;
-//    int recommended = 0;
-//
-//    while (item && recommended < n) {
-//        // Skip if the user has already rated the item
-//        if (hasEdge(graph->users, userId, item->id)) {
-//            item = item->next;
-//            continue;
-//        }
-//
-//        // Prepare inputs
-//        inputs[0] = (double)userId;
-//        inputs[1] = (double)item->id;
-//        inputs[2] = 0.0; // Default rating for unrated items
-//
-//        // Predict Rating
-//        forward(nn, inputs, &output);
-//
-//        printf("Movie %d: Predicted Rating = %.2f\n", item->id, output);
-//        recommended++;
-//        item = item->next;
-//    }
-//}
