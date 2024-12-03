@@ -1,7 +1,6 @@
 # Compiler
 CC = gcc
-CFLAGS = -lm
-# -Wall -Wextra -O2 -std=c99
+CFLAGS = -lm # -Wall -Wextra -O2 -std=c99
 
 # Directories
 SRC_DIR = src
@@ -18,7 +17,7 @@ HEADERS = $(SRC_DIR)/graph.h \
           $(SRC_DIR)/neuralnetwork.h
 
 # Output
-TARGET = $(BUILD_DIR)/a
+TARGET = $(BUILD_DIR)/run
 
 # Build Rules
 all: $(TARGET)
@@ -38,4 +37,3 @@ run: $(TARGET)
 	$(TARGET)
 
 .PHONY: all clean run
-
