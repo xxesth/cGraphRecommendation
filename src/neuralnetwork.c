@@ -3,6 +3,12 @@
 #include <math.h>
 #include "neuralnetwork.h"
 
+#define INPUT_SIZE 3
+#define HIDDEN_SIZE 5
+#define OUTPUT_SIZE 1
+#define LEARNING_RATE 0.1
+#define EPOCHS 1000
+
 // Helper function: Random initialization
 double randomWeight() {
     return ((double)rand() / RAND_MAX) * 2 - 1; // Random value in [-1, 1]
@@ -19,30 +25,30 @@ double sigmoidDerivative(double x) {
 }
 
 // Create and initialize a neural network
-NeuralNetwork *createNeuralNetwork(int inputSize, int hiddenSize, int outputSize, double learningRate) {
+NeuralNetwork *createNeuralNetwork(){
     NeuralNetwork *nn = malloc(sizeof(NeuralNetwork));
-    nn->inputSize = inputSize;
-    nn->hiddenSize = hiddenSize;
-    nn->outputSize = outputSize;
-    nn->learningRate = learningRate;
+    nn->inputSize = INPUT_SIZE;
+    nn->hiddenSize = HIDDEN_SIZE;
+    nn->outputSize = OUTPUT_SIZE;
+    nn->learningRate = LEARNING_RATE;
 
     // Allocate weights and biases
-    nn->weights1 = malloc(inputSize * sizeof(double *));
-    for (int i = 0; i < inputSize; i++) {
-        nn->weights1[i] = malloc(hiddenSize * sizeof(double));
-        for (int j = 0; j < hiddenSize; j++) {
+    nn->weights1 = malloc(nn->inputSize * sizeof(double *));
+    for (int i = 0; i < nn->inputSize; i++) {
+        nn->weights1[i] = malloc(nn->hiddenSize * sizeof(double));
+        for (int j = 0; j < nn->hiddenSize; j++) {
             nn->weights1[i][j] = randomWeight();
         }
     }
-    nn->bias1 = malloc(hiddenSize * sizeof(double));
-    for (int i = 0; i < hiddenSize; i++) {
+    nn->bias1 = malloc(nn->hiddenSize * sizeof(double));
+    for (int i = 0; i < nn->hiddenSize; i++) {
         nn->bias1[i] = randomWeight();
     }
 
-    nn->weights2 = malloc(hiddenSize * sizeof(double *));
-    for (int i = 0; i < hiddenSize; i++) {
-        nn->weights2[i] = malloc(outputSize * sizeof(double));
-        for (int j = 0; j < outputSize; j++) {
+    nn->weights2 = malloc(nn->hiddenSize * sizeof(double *));
+    for (int i = 0; i < nn->hiddenSize; i++) {
+        nn->weights2[i] = malloc(nn->outputSize * sizeof(double));
+        for (int j = 0; j < nn->outputSize; j++) {
             nn->weights2[i][j] = randomWeight();
         }
     }
@@ -52,7 +58,8 @@ NeuralNetwork *createNeuralNetwork(int inputSize, int hiddenSize, int outputSize
 }
 
 // Train the neural network
-void trainNeuralNetwork(NeuralNetwork *nn, double **inputs, double *targets, int dataSize, int epochs) {
+void trainNeuralNetwork(NeuralNetwork *nn, double **inputs, double *targets, int dataSize){
+    const int epochs = EPOCHS;
     double *hiddenLayer = malloc(nn->hiddenSize * sizeof(double));
     double output;
 

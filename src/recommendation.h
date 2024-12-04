@@ -7,9 +7,12 @@ void recommendRandomMovie(Graph *graph, int userId);
 void recommendTopRatedMovies(Graph *graph, int userId, int n);
 void recommendBasedOnSimilarUser(Graph *graph, int userId, int n);
 void recommendClosestMovies(Graph *graph, int userId, int n);
-void oldrecommendClosestMovies(Graph *graph, int userId, int n);
+void recommendNeuralNetwork(Graph *graph, int userId, int n);
+void recommendMovieBasedOnItem(Graph *graph, int itemId);
 
-int *dijkstra(Graph *graph, Node *startNode);
+void dijkstra(Graph *graph, int userId, int *distances);
+int findMinDistance(int *distances, int *visited, int totalNodes);
+int *findUsersWithHighRating(Graph *graph, int itemId, int *userCount);
+int *findMostLikedMovies(Graph *graph, int *users, int userCount, int excludeItem, int n);
 
 #endif
-
