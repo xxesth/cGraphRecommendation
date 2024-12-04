@@ -2,6 +2,8 @@
 # Graph Recommendation
 A project focused on constructing a graph from raw data and developing a recommendation system leveraging the graph structure. The system combines traditional algorithms with neural network-based methods to provide recommendations.
 
+Dataset: https://grouplens.org/datasets/movielens/
+
 ---
   
 ### to run:  
