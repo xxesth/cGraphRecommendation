@@ -6,15 +6,19 @@
 #include <float.h>
 #include <math.h>
 #include "recommendation.h"
+#include "neuralnetwork.h"
+
+#define MOSTLIKEDMOVIECOUNT 5
 
 void recommendRandomMovie(Graph *graph, int userId) {
+    printf("\nSoru 1-\n");
     Node *user = findNode(graph->users, userId); 
     if (!user) {
         printf("User ID %d not found!\n", userId);
         return;
     }
-    printf("\n\n ***** \n\n GIVEN USER ID: %d, FOUND: %d", userId, user->id);
-    printEdges(user);
+    //printf("\n\n ***** \n\n GIVEN USER ID: %d, FOUND: %d", userId, user->id);
+    //printEdges(user);
 
     Node *item = graph->items;
     int itemcount = 0;
@@ -60,10 +64,12 @@ void recommendRandomMovie(Graph *graph, int userId) {
 
     printf("Recommended movie for user %d: Movie ID %d\n", userId, recommendedMovie);
 
+    printf("\n");
     free(unratedMovies);
 }
 
 void recommendTopRatedMovies(Graph *graph, int userId, int n) {
+    printf("Soru 2-\n");
     Node *user = findNode(graph->users, userId); 
     if (!user) {
         printf("User ID %d not found!\n", userId);
@@ -134,10 +140,12 @@ void recommendTopRatedMovies(Graph *graph, int userId, int n) {
         }
     }
 
+    printf("\n");
     free(topMovies);
 }
 
-void recommendBasedOnSimilarUser(Graph *graph, int userId, int n) {
+void recommendBasedOnSimilarUser(Graph *graph, int userId, int n){
+    printf("Soru 3-\n");
     Node *user = findNode(graph->users, userId);
     if (!user) {
         printf("User with ID %d not found.\n", userId);
@@ -252,17 +260,18 @@ void recommendBasedOnSimilarUser(Graph *graph, int userId, int n) {
         }
     }
     
+    printf("\n");
     free(topMovies);
 }
 
-// Helper function to find the node with the smallest distance
-static int findMinDistanceNode(int *distances, int *visited, int totalNodes) {
-    int minDistance = INT_MAX;
+// Helper function to find the node with the smallest distance in the unvisited set
+int findMinDistance(int *distances, int *visited, int totalNodes) {
+    int min = INT_MAX;
     int minIndex = -1;
 
     for (int i = 0; i < totalNodes; i++) {
-        if (!visited[i] && distances[i] < minDistance) {
-            minDistance = distances[i];
+        if (!visited[i] && distances[i] < min) {
+            min = distances[i];
             minIndex = i;
         }
     }
@@ -270,32 +279,51 @@ static int findMinDistanceNode(int *distances, int *visited, int totalNodes) {
     return minIndex;
 }
 
-// Dijkstra's algorithm
-int *dijkstra(Graph *graph, Node *startNode) {
-    int totalNodes = countNodes(graph->items); // Use countNodes instead of graph->items
-    int *distances = malloc(totalNodes * sizeof(int));
-    int *visited = calloc(totalNodes, sizeof(int));
+// Dijkstra's algorithm to calculate shortest distances from the user to all items
+void dijkstra(Graph *graph, int userId, int *distances) {
+    int totalItems = countNodes(graph->items); // Number of item nodes
+    int totalNodes = totalItems; // Items are 1-indexed in the graph
+    int *visited = calloc(totalNodes, sizeof(int)); // Track visited nodes
 
-    // Initialize distances to infinity
+    // Initialize distances to "infinity"
     for (int i = 0; i < totalNodes; i++) {
         distances[i] = INT_MAX;
     }
-    distances[startNode->id] = 0; // Distance to start node is zero
 
+    // Start from the given user
+    Node *user = findNode(graph->users, userId);
+    if (!user) {
+        fprintf(stderr, "User with ID %d not found.\n", userId);
+        free(visited);
+        return;
+    }
+
+    // Set distances for directly connected items
+    distances[userId - 1] = 0; // Start node has a distance of 0
+    Edge *edge = user->edges;
+    while (edge) {
+        distances[edge->itemId - 1] = edge->rating; // Distance is the rating (edge weight)
+        edge = edge->nextEdge;
+    }
+
+    // Dijkstra's algorithm
     for (int i = 0; i < totalNodes - 1; i++) {
-        int currentNode = findMinDistanceNode(distances, visited, totalNodes);
-        if (currentNode == -1) break; // No reachable nodes left
-        visited[currentNode] = 1;
+        // Find the unvisited node with the smallest distance
+        int u = findMinDistance(distances, visited, totalNodes);
+        if (u == -1) break; // No reachable unvisited nodes remain
 
-        Node *current = findNode(graph->items, currentNode);
-        Edge *edge = current->edges;
+        visited[u] = 1;
 
+        // Update distances for all neighbors of `u`
+        Node *item = findNode(graph->items, u + 1); // Convert 0-indexed to itemId
+        if (!item) continue;
+
+        edge = item->edges;
         while (edge) {
-            int neighbor = edge->itemId;
-            if (!visited[neighbor] && distances[currentNode] != INT_MAX) {
-                int newDistance = distances[currentNode] + (5 - edge->rating); // Invert weight
-                if (newDistance < distances[neighbor]) {
-                    distances[neighbor] = newDistance;
+            if (!visited[edge->userId - 1] && distances[u] != INT_MAX) {
+                int newDist = distances[u] + edge->rating;
+                if (newDist < distances[edge->userId - 1]) {
+                    distances[edge->userId - 1] = newDist;
                 }
             }
             edge = edge->nextEdge;
@@ -303,49 +331,188 @@ int *dijkstra(Graph *graph, Node *startNode) {
     }
 
     free(visited);
-    return distances;
 }
 
-// Updated recommendClosestMovies using Dijkstra's algorithm
 void recommendClosestMovies(Graph *graph, int userId, int n) {
-    Node *userNode = findNode(graph->users, userId);
-    if (!userNode) {
-        printf("User %d not found.\n", userId);
-        return;
-    }
+    printf("Soru 4-\n");
     int totalItems = countNodes(graph->items);
-    int *distances = dijkstra(graph, userNode);
-    
-    // Find the n closest unrated movies
-    int *recommendedMovies = malloc(n * sizeof(int));
-    for (int i = 0; i < n; i++) {
-        recommendedMovies[i] = -1;
+    int *distances = malloc(totalItems * sizeof(int));
+    dijkstra(graph, userId, distances);
+
+    // Collect unrated movies with their distances
+    int **movieDistances = malloc(totalItems * sizeof(int *));
+    int count = 0;
+    Node *user = findNode(graph->users, userId);
+
+    // Check which movies are unrated by the user
+    for (int i = 0; i < totalItems; i++) {
+        if (!hasEdge(user, i + 1) && distances[i] != INT_MAX) {
+            movieDistances[count] = malloc(2 * sizeof(int));
+            movieDistances[count][0] = i + 1;        // Movie ID
+            movieDistances[count][1] = distances[i]; // Distance
+            count++;
+        }
     }
 
-    for (int i = 0; i < totalItems; i++) {
-        Node *itemNode = findNode(graph->items, i);
-        if (itemNode == NULL){
-            printf("%d id'li item null idi");
-            continue;
-        }
-        if (!hasEdge(userNode, itemNode->id)) { // Check if the user has rated this movie
-            for (int j = 0; j < n; j++) {
-                if (recommendedMovies[j] == -1 || distances[i] < distances[recommendedMovies[j]]) {
-                    for (int k = n - 1; k > j; k--) {
-                        recommendedMovies[k] = recommendedMovies[k - 1];
-                    }
-                    recommendedMovies[j] = i;
-                    break;
-                }
+    // Sort unrated movies by distance (ascending)
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = i + 1; j < count; j++) {
+            if (movieDistances[i][1] > movieDistances[j][1]) {
+                int *temp = movieDistances[i];
+                movieDistances[i] = movieDistances[j];
+                movieDistances[j] = temp;
             }
         }
     }
 
-    printf("Recommended Closest Movies for User %d:\n", userId);
-    for (int i = 0; i < n && recommendedMovies[i] != -1; i++) {
-        printf("Movie ID: %d, Distance: %d\n", recommendedMovies[i], distances[recommendedMovies[i]]);
+    // Recommend top `n` movies
+    printf("Closest movies for user %d:\n", userId);
+    for (int i = 0; i < n && i < count; i++) {
+        printf("Movie ID: %d, Distance: %d\n", movieDistances[i][0], movieDistances[i][1]);
+        free(movieDistances[i]);
     }
 
-    free(recommendedMovies);
+    printf("\n");
+    free(movieDistances);
     free(distances);
+}
+
+void recommendNeuralNetwork(Graph *graph, int userId, int n){
+    printf("Noral network demosu-\n");
+    // Training the neural network
+    NeuralNetwork *nn = createNeuralNetwork(); // 3 inputs, 5 hidden nodes, 1 output
+    // Prepare training data (dummy example for now)
+    double targets[2] = {0.8, 0.9}; // Normalized ratings
+    double **inputs = malloc(2 * sizeof(double *));
+    for (int i = 0; i < 2; i++) {
+        inputs[i] = malloc(3 * sizeof(double)); // Allocate space for each feature
+        if (inputs[i] == NULL) {
+            fprintf(stderr, "Failed to allocate memory for inputs[%d]\n", i);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    // Populate inputs
+    inputs[0][0] = 53; inputs[0][1] = 10; inputs[0][2] = 3; // Example: User ID, Item ID, Rating
+    inputs[1][0] = 53; inputs[1][1] = 15; inputs[1][2] = 4;
+    
+    trainNeuralNetwork(nn, (double **)inputs, targets, 2);
+
+    // Predict a rating
+    double testInput[3] = {53, 12, 4}; // User ID, Item ID, and Rating
+    double prediction = predict(nn, testInput);
+    printf("Predicted Rating: %.2f\n", prediction * 5);
+
+    printf("\n");
+    freeNeuralNetwork(nn);
+}
+
+int *findUsersWithHighRating(Graph *graph, int itemId, int *userCount) {
+    Node *itemNode = findNode(graph->items, itemId);
+    if (!itemNode) return NULL;
+
+    Edge *edge = itemNode->edges;
+    int *users = malloc((countNodes(graph->users) + 1) * sizeof(int)); // 1-based indexing
+    *userCount = 0;
+
+    while (edge) {
+        if (edge->rating == 5) {
+            users[*userCount] = edge->userId; // Store user ID directly
+            (*userCount)++;
+        }
+        edge = edge->nextEdge;
+    }
+    return users;
+}
+
+int *findMostLikedMovies(Graph *graph, int *users, int userCount, int excludeItem, int n) {
+    int *movieLikes = calloc(countNodes(graph->items) + 1, sizeof(int)); // 1-based indexing
+    int *topMovies = malloc(n * sizeof(int)); // Array to store the top `n` movies
+    for (int i = 0; i < n; i++) {
+        topMovies[i] = -1; // Initialize to invalid movie IDs
+    }
+
+    // Count likes for each movie
+    for (int i = 0; i < userCount; i++) {
+        Node *userNode = findNode(graph->users, users[i]);
+        if (!userNode) continue;
+
+        Edge *edge = userNode->edges;
+        while (edge) {
+            if (edge->rating == 5 && edge->itemId != excludeItem) {
+                movieLikes[edge->itemId]++;
+            }
+            edge = edge->nextEdge;
+        }
+    }
+
+    // Find top `n` movies with the most likes
+    for (int i = 0; i < n; i++) {
+        int maxLikes = 0, mostLikedMovie = -1;
+        for (int j = 1; j <= countNodes(graph->items); j++) { // Start from 1
+            if (movieLikes[j] > maxLikes) {
+                maxLikes = movieLikes[j];
+                mostLikedMovie = j;
+            }
+        }
+        if (mostLikedMovie != -1) {
+            topMovies[i] = mostLikedMovie;
+            movieLikes[mostLikedMovie] = 0; // Mark as processed
+        }
+    }
+
+    free(movieLikes);
+    return topMovies;
+}
+
+void recommendMovieBasedOnItem(Graph *graph, int itemId) {
+    printf("Soru 5-\n");
+    int userCount = 0;
+    int *users = findUsersWithHighRating(graph, itemId, &userCount);
+
+    if (!users || userCount == 0) {
+        printf("No users rated this movie with 5.\n");
+        free(users);
+        return;
+    }
+
+    int *recommendedMovies = findMostLikedMovies(graph, users, userCount, itemId, MOSTLIKEDMOVIECOUNT);
+
+    for (int i = 0; i < MOSTLIKEDMOVIECOUNT; i++) {
+        if (recommendedMovies[i] == -1) continue;
+
+        int hasUnratedUsers = 0;
+
+        for (int j = 0; j < userCount; j++) {
+            Node *userNode = findNode(graph->users, users[j]);
+            if (!userNode) continue;
+
+            Edge *edge = userNode->edges;
+            int hasRated = 0;
+
+            while (edge) {
+                if (edge->itemId == recommendedMovies[i]) {
+                    hasRated = 1;
+                    break;
+                }
+                edge = edge->nextEdge;
+            }
+
+            if (!hasRated) {
+                printf("Movie %d is recommended for User %d.\n", recommendedMovies[i], users[j]);
+                hasUnratedUsers = 1;
+            }
+        }
+
+        if (hasUnratedUsers) {
+            printf("\n");
+            free(recommendedMovies);
+            free(users);
+            return;
+        }
+    }
+
+    printf("No recommendation found.\n");
+    free(recommendedMovies);
+    free(users);
 }

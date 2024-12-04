@@ -13,8 +13,8 @@ typedef struct NeuralNetwork {
 } NeuralNetwork;
 
 // Function declarations
-NeuralNetwork *createNeuralNetwork(int inputSize, int hiddenSize, int outputSize, double learningRate);
-void trainNeuralNetwork(NeuralNetwork *nn, double **inputs, double *targets, int dataSize, int epochs);
+NeuralNetwork *createNeuralNetwork();
+void trainNeuralNetwork(NeuralNetwork *nn, double **inputs, double *targets, int dataSize);
 double predict(NeuralNetwork *nn, double *input);
 void freeNeuralNetwork(NeuralNetwork *nn);
 

@@ -60,7 +60,7 @@ void addUser(Graph *graph, int userId) {
     Node *newUser = createNode(userId);
     newUser->next = graph->users;
     graph->users = newUser;
-    printf("Added user with ID: %d\n", userId);
+    //printf("Added user with ID: %d\n", userId);
 }
 
 // Add a new item to the graph
@@ -68,7 +68,7 @@ void addItem(Graph *graph, int itemId) {
     Node *newItem = createNode(itemId);
     newItem->next = graph->items;
     graph->items = newItem;
-    printf("Added item with ID: %d\n", itemId);
+    //printf("Added item with ID: %d\n", itemId);
 }
 
 // Add an edge from a user to an item with a given rating
@@ -79,14 +79,14 @@ void addEdge(Graph *graph, int userId, int itemId, int rating) {
         user = user->next;
     }
     if (!user) {
-        printf("User ID %d not found!\n", userId);
+        //printf("User ID %d not found!\n", userId);
         return;
     }
     while (item && item->id != itemId){
         item = item->next;
     }
     if(!item){
-        printf("Item ID %d not found!\n", itemId);
+        //printf("Item ID %d not found!\n", itemId);
         return;
     }
 
@@ -103,7 +103,7 @@ void addEdge(Graph *graph, int userId, int itemId, int rating) {
     user->edges = newEdge;
     item->edges = newEdge2; 
 
-    printf("Added edge from user %d to item %d with rating %d\n", userId, itemId, rating);
+    //printf("Added edge from user %d to item %d with rating %d\n", userId, itemId, rating);
 }
 
 // Calculate the degree of a user (number of edges)
@@ -112,8 +112,8 @@ int degreeOfVertex(Graph *graph, int userId) {
     while (user && user->id != userId) {
         user = user->next;
     }
-    if (!user) {
-        printf("User ID %d not found!\n", userId);
+    if (!user){
+        //printf("User ID %d not found!\n", userId);
         return -1; // User not found
     }
 
@@ -187,18 +187,18 @@ void printGraph(Graph *graph) {
         item = item->next;
     }
   
-    Node *best = graph->users;
-    Node *test = graph->items;
-    printf("\n\nTEST USERS\n\n");
-    while(best){
-       printf("%d ", best->id);
-       best = best->next;
-    }
-    printf("\n\nTEST ITEMS\n\n");
-    while(test){
-        printf("%d ", test->id);
-        test = test->next;
-    }
+    //Node *best = graph->users;
+    //Node *test = graph->items;
+    //printf("\n\nTEST USERS\n\n");
+    //while(best){
+    //   printf("%d ", best->id);
+    //   best = best->next;
+    //}
+    //printf("\n\nTEST ITEMS\n\n");
+    //while(test){
+    //    printf("%d ", test->id);
+    //    test = test->next;
+    //}
 
 }
 
