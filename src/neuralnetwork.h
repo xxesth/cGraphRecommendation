@@ -1,21 +1,32 @@
 #ifndef NEURALNETWORK_H
 #define NEURALNETWORK_H
 
-typedef struct NeuralNetwork {
-    int inputSize;       // Number of input features
-    int hiddenSize;      // Number of neurons in the hidden layer
-    int outputSize;      // Output size (single value for predicted rating)
-    double **weights1;   // Weights from input to hidden layer
-    double *bias1;       // Bias for the hidden layer
-    double **weights2;   // Weights from hidden to output layer
-    double bias2;        // Bias for the output layer
-    double learningRate; // Learning rate for training
-} NeuralNetwork;
+typedef struct {
+    float *embedding;  // Array of latent features
+} EmbeddingVector;
 
-// Function declarations
-NeuralNetwork *createNeuralNetwork();
-void trainNeuralNetwork(NeuralNetwork *nn, double **inputs, double *targets, int dataSize);
-double predict(NeuralNetwork *nn, double *input);
-void freeNeuralNetwork(NeuralNetwork *nn);
+typedef struct {
+    EmbeddingVector *userEmbeddings;  // Array of user embedding vectors
+    EmbeddingVector *itemEmbeddings;  // Array of item embedding vectors
+    int *userIdMap;     // Maps user IDs to array indices
+    int *itemIdMap;     // Maps item IDs to array indices
+    int numUsers;
+    int numItems;
+    int maxUserId;      // Highest user ID in the graph
+    int maxItemId;      // Highest item ID in the graph
+} MatrixFactorization;
 
-#endif // NEURALNETWORK_H
+void initEmbedding(EmbeddingVector *vec);
+int findMaxId(Node *head);
+void createIdMapping(Node *head, int *idMap, int maxId);
+MatrixFactorization* initModel(Graph *graph);
+float dotProduct(float *vec1, float *vec2);
+int getUserIndex(MatrixFactorization *model, int userId);
+int getItemIndex(MatrixFactorization *model, int itemId);
+float predictRating(MatrixFactorization *model, int userId, int itemId);
+void trainOnExample(MatrixFactorization *model, int userId, int itemId, float actualRating);
+void trainModel(MatrixFactorization *model, Graph *graph, int numEpochs);
+void getTopNRecommendations(MatrixFactorization *model, Graph *graph, int userId, int N, int *recommendedItems);
+void freeModel(MatrixFactorization *model);
+
+#endif

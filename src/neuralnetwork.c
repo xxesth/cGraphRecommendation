@@ -1,151 +1,214 @@
+#include "graph.h"
+#include "neuralnetwork.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "neuralnetwork.h"
 
-#define INPUT_SIZE 3
-#define HIDDEN_SIZE 5
-#define OUTPUT_SIZE 1
-#define LEARNING_RATE 0.1
-#define EPOCHS 1000
+#define LEARNING_RATE 0.01
+#define REGULARIZATION 0.02
+#define EMBEDDING_SIZE 10  // Number of latent features
 
-// Helper function: Random initialization
-double randomWeight() {
-    return ((double)rand() / RAND_MAX) * 2 - 1; // Random value in [-1, 1]
+// Initialize embedding vector
+void initEmbedding(EmbeddingVector *vec) {
+    vec->embedding = malloc(EMBEDDING_SIZE * sizeof(float));
+    for (int i = 0; i < EMBEDDING_SIZE; i++) {
+        vec->embedding[i] = ((float)rand() / RAND_MAX - 0.5f) * 0.1f;
+    }
 }
 
-// Helper function: Sigmoid activation
-double sigmoid(double x) {
-    return 1.0 / (1.0 + exp(-x));
-}
-
-// Helper function: Derivative of sigmoid
-double sigmoidDerivative(double x) {
-    return x * (1.0 - x);
-}
-
-// Create and initialize a neural network
-NeuralNetwork *createNeuralNetwork(){
-    NeuralNetwork *nn = malloc(sizeof(NeuralNetwork));
-    nn->inputSize = INPUT_SIZE;
-    nn->hiddenSize = HIDDEN_SIZE;
-    nn->outputSize = OUTPUT_SIZE;
-    nn->learningRate = LEARNING_RATE;
-
-    // Allocate weights and biases
-    nn->weights1 = malloc(nn->inputSize * sizeof(double *));
-    for (int i = 0; i < nn->inputSize; i++) {
-        nn->weights1[i] = malloc(nn->hiddenSize * sizeof(double));
-        for (int j = 0; j < nn->hiddenSize; j++) {
-            nn->weights1[i][j] = randomWeight();
+// Find maximum ID in a linked list of nodes
+int findMaxId(Node *head) {
+    int maxId = 0;
+    Node *current = head;
+    while (current != NULL) {
+        if (current->id > maxId) {
+            maxId = current->id;
         }
+        current = current->next;
     }
-    nn->bias1 = malloc(nn->hiddenSize * sizeof(double));
-    for (int i = 0; i < nn->hiddenSize; i++) {
-        nn->bias1[i] = randomWeight();
-    }
-
-    nn->weights2 = malloc(nn->hiddenSize * sizeof(double *));
-    for (int i = 0; i < nn->hiddenSize; i++) {
-        nn->weights2[i] = malloc(nn->outputSize * sizeof(double));
-        for (int j = 0; j < nn->outputSize; j++) {
-            nn->weights2[i][j] = randomWeight();
-        }
-    }
-    nn->bias2 = randomWeight();
-
-    return nn;
+    return maxId;
 }
 
-// Train the neural network
-void trainNeuralNetwork(NeuralNetwork *nn, double **inputs, double *targets, int dataSize){
-    const int epochs = EPOCHS;
-    double *hiddenLayer = malloc(nn->hiddenSize * sizeof(double));
-    double output;
+// Create ID to index mapping
+void createIdMapping(Node *head, int *idMap, int maxId) {
+    // Initialize all mappings to -1 (invalid)
+    for (int i = 0; i <= maxId; i++) {
+        idMap[i] = -1;
+    }
 
-    for (int epoch = 0; epoch < epochs; epoch++) {
-        for (int i = 0; i < dataSize; i++) {
-            // Forward pass
-            for (int j = 0; j < nn->hiddenSize; j++) {
-                hiddenLayer[j] = nn->bias1[j];
-                for (int k = 0; k < nn->inputSize; k++) {
-                    hiddenLayer[j] += inputs[i][k] * nn->weights1[k][j];
-                }
-                hiddenLayer[j] = sigmoid(hiddenLayer[j]);
+    // Create mapping for existing IDs
+    int index = 0;
+    Node *current = head;
+    while (current != NULL) {
+        idMap[current->id] = index;
+        index++;
+        current = current->next;
+    }
+}
+
+// Initialize the model
+MatrixFactorization* initModel(Graph *graph) {
+    MatrixFactorization *model = malloc(sizeof(MatrixFactorization));
+
+    // Find maximum IDs
+    model->maxUserId = findMaxId(graph->users);
+    model->maxItemId = findMaxId(graph->items);
+
+    // Allocate and initialize ID mapping arrays
+    model->userIdMap = malloc((model->maxUserId + 1) * sizeof(int));
+    model->itemIdMap = malloc((model->maxItemId + 1) * sizeof(int));
+
+    createIdMapping(graph->users, model->userIdMap, model->maxUserId);
+    createIdMapping(graph->items, model->itemIdMap, model->maxItemId);
+
+    model->numUsers = countNodes(graph->users);
+    model->numItems = countNodes(graph->items);
+
+    // Allocate arrays for embeddings
+    model->userEmbeddings = malloc(model->numUsers * sizeof(EmbeddingVector));
+    model->itemEmbeddings = malloc(model->numItems * sizeof(EmbeddingVector));
+
+    // Initialize all embeddings
+    for (int i = 0; i < model->numUsers; i++) {
+        initEmbedding(&model->userEmbeddings[i]);
+    }
+    for (int i = 0; i < model->numItems; i++) {
+        initEmbedding(&model->itemEmbeddings[i]);
+    }
+
+    return model;
+}
+
+float dotProduct(float *vec1, float *vec2) {
+    float sum = 0;
+    for (int i = 0; i < EMBEDDING_SIZE; i++) {
+        sum += vec1[i] * vec2[i];
+    }
+    return sum;
+}
+
+// Get array index for a user ID
+int getUserIndex(MatrixFactorization *model, int userId) {
+    if (userId > model->maxUserId || model->userIdMap[userId] == -1) {
+        printf("Error: Invalid user ID %d\n", userId);
+        exit(1);
+    }
+    return model->userIdMap[userId];
+}
+
+// Get array index for an item ID
+int getItemIndex(MatrixFactorization *model, int itemId) {
+    if (itemId > model->maxItemId || model->itemIdMap[itemId] == -1) {
+        printf("Error: Invalid item ID %d\n", itemId);
+        exit(1);
+    }
+    return model->itemIdMap[itemId];
+}
+
+float predictRating(MatrixFactorization *model, int userId, int itemId) {
+    int userIndex = getUserIndex(model, userId);
+    int itemIndex = getItemIndex(model, itemId);
+    
+    float pred = dotProduct(
+        model->userEmbeddings[userIndex].embedding,
+        model->itemEmbeddings[itemIndex].embedding
+    );
+    
+    if (pred < 1.0f) pred = 1.0f;
+    if (pred > 5.0f) pred = 5.0f;
+    
+    return pred;
+}
+
+void trainOnExample(MatrixFactorization *model, int userId, int itemId, 
+                   float actualRating) {
+    int userIndex = getUserIndex(model, userId);
+    int itemIndex = getItemIndex(model, itemId);
+    
+    float *userEmb = model->userEmbeddings[userIndex].embedding;
+    float *itemEmb = model->itemEmbeddings[itemIndex].embedding;
+    
+    float pred = predictRating(model, userId, itemId);
+    float error = actualRating - pred;
+    
+    for (int f = 0; f < EMBEDDING_SIZE; f++) {
+        float userGrad = error * itemEmb[f] - REGULARIZATION * userEmb[f];
+        float itemGrad = error * userEmb[f] - REGULARIZATION * itemEmb[f];
+        
+        userEmb[f] += LEARNING_RATE * userGrad;
+        itemEmb[f] += LEARNING_RATE * itemGrad;
+    }
+}
+
+// Train model on entire graph
+void trainModel(MatrixFactorization *model, Graph *graph, int numEpochs) {
+    for (int epoch = 0; epoch < numEpochs; epoch++) {
+        Node *user = graph->users;
+        while (user != NULL) {
+            Edge *edge = user->edges;
+            while (edge != NULL) {
+                trainOnExample(model, user->id, edge->itemId, edge->rating);
+                edge = edge->nextEdge;
             }
-
-            output = nn->bias2;
-            for (int j = 0; j < nn->hiddenSize; j++) {
-                hiddenLayer[j] = nn->bias1[j];
-                for (int k = 0; k < nn->inputSize; k++) {
-                    // Debug statements
-                    if (inputs[i] == NULL) {
-                        printf("Inputs row %d is NULL\n", i);
-                        return; // Exit on NULL
-                    }
-                    hiddenLayer[j] += inputs[i][k] * nn->weights1[k][j];
-                }
-                hiddenLayer[j] = sigmoid(hiddenLayer[j]);
-                output = hiddenLayer[j];
-            }
-
-            // Calculate error
-            double error = targets[i] - output;
-
-            // Backpropagation
-            double outputGradient = error * sigmoidDerivative(output);
-            for (int j = 0; j < nn->hiddenSize; j++) {
-                double hiddenGradient = outputGradient * nn->weights2[j][0] * sigmoidDerivative(hiddenLayer[j]);
-                nn->weights2[j][0] += nn->learningRate * outputGradient * hiddenLayer[j];
-                nn->bias1[j] += nn->learningRate * hiddenGradient;
-
-                for (int k = 0; k < nn->inputSize; k++) {
-                    nn->weights1[k][j] += nn->learningRate * hiddenGradient * inputs[i][k];
-                }
-            }
-            nn->bias2 += nn->learningRate * outputGradient;
+            user = user->next;
         }
     }
-
-    free(hiddenLayer);
 }
 
-// Predict using the neural network
-double predict(NeuralNetwork *nn, double *input) {
-    double *hiddenLayer = malloc(nn->hiddenSize * sizeof(double));
-    double output;
-
-    // Forward pass
-    for (int j = 0; j < nn->hiddenSize; j++) {
-        hiddenLayer[j] = nn->bias1[j];
-        for (int k = 0; k < nn->inputSize; k++) {
-            hiddenLayer[j] += input[k] * nn->weights1[k][j];
+// Get top N recommendations for a user
+void getTopNRecommendations(MatrixFactorization *model, Graph *graph,
+                          int userId, int N, int *recommendedItems) {
+    // Create array of all predictions
+    typedef struct {
+        int itemId;
+        float prediction;
+    } ItemPrediction;
+    
+    ItemPrediction *predictions = malloc(model->numItems * sizeof(ItemPrediction));
+    int numPredictions = 0;
+    
+    // Get predictions for all items user hasn't rated
+    Node *item = graph->items;
+    while (item != NULL) {
+        Node *user = findNode(graph->users, userId);
+        if (!hasEdge(user, item->id)) {
+            predictions[numPredictions].itemId = item->id;
+            predictions[numPredictions].prediction = 
+                predictRating(model, userId, item->id);
+            numPredictions++;
         }
-        hiddenLayer[j] = sigmoid(hiddenLayer[j]);
+        item = item->next;
     }
-
-    output = nn->bias2;
-    for (int j = 0; j < nn->hiddenSize; j++) {
-        output += hiddenLayer[j] * nn->weights2[j][0];
+    
+    // Sort predictions (simple bubble sort for now)
+    for (int i = 0; i < numPredictions - 1; i++) {
+        for (int j = 0; j < numPredictions - i - 1; j++) {
+            if (predictions[j].prediction < predictions[j + 1].prediction) {
+                ItemPrediction temp = predictions[j];
+                predictions[j] = predictions[j + 1];
+                predictions[j + 1] = temp;
+            }
+        }
     }
-    output = sigmoid(output);
-
-    free(hiddenLayer);
-    return output;
+    
+    // Copy top N items to output array
+    for (int i = 0; i < N && i < numPredictions; i++) {
+        recommendedItems[i] = predictions[i].itemId;
+    }
+    
+    free(predictions);
 }
 
-// Free memory allocated for the neural network
-void freeNeuralNetwork(NeuralNetwork *nn) {
-    for (int i = 0; i < nn->inputSize; i++) {
-        free(nn->weights1[i]);
+void freeModel(MatrixFactorization *model) {
+    for (int i = 0; i < model->numUsers; i++) {
+        free(model->userEmbeddings[i].embedding);
     }
-    free(nn->weights1);
-    free(nn->bias1);
-
-    for (int i = 0; i < nn->hiddenSize; i++) {
-        free(nn->weights2[i]);
+    for (int i = 0; i < model->numItems; i++) {
+        free(model->itemEmbeddings[i].embedding);
     }
-    free(nn->weights2);
-
-    free(nn);
+    free(model->userEmbeddings);
+    free(model->itemEmbeddings);
+    free(model->userIdMap);
+    free(model->itemIdMap);
+    free(model);
 }
