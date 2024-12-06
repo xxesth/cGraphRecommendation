@@ -28,5 +28,6 @@ void trainOnExample(MatrixFactorization *model, int userId, int itemId, float ac
 void trainModel(MatrixFactorization *model, Graph *graph, int numEpochs);
 void getTopNRecommendations(MatrixFactorization *model, Graph *graph, int userId, int N, int *recommendedItems);
 void freeModel(MatrixFactorization *model);
+void recommendNeuralNetwork(Graph *graph, int epochs, int userId, int itemId, int n);
 
 #endif

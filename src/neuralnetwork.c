@@ -199,6 +199,21 @@ void getTopNRecommendations(MatrixFactorization *model, Graph *graph,
     free(predictions);
 }
 
+void recommendNeuralNetwork(Graph *graph, int epochs, int userId, int itemId, int n){
+    MatrixFactorization *model = initModel(graph);
+    trainModel(model, graph, epochs);
+    float pred = predictRating(model, userId, itemId);
+    printf("Predicted rating for User %d, Item %d: %.2f (New prediction)\n", userId, itemId, pred);
+    int recommendations[n];
+    getTopNRecommendations(model, graph, userId, n, recommendations);
+    for (int i = 0; i < n; i++) {
+        printf("Recommended item %d: Item %d (Predicted rating: %.2f)\n",
+               i + 1, recommendations[i],
+               predictRating(model, userId, recommendations[i]));
+    }
+    freeModel(model);
+}
+
 void freeModel(MatrixFactorization *model) {
     for (int i = 0; i < model->numUsers; i++) {
         free(model->userEmbeddings[i].embedding);
