@@ -447,9 +447,18 @@ void recommendMovieBasedOnItem(Graph *graph, int itemId) {
     }
 
     int *recommendedMovies = findMostLikedMovies(graph, users, userCount, itemId, MOSTLIKEDMOVIECOUNT);
+    int *recommendedMovieTracker = malloc((countNodes(graph->items) + 1) * sizeof(int)); // To track recommended movies
+    for (int i = 0; i <= countNodes(graph->items); i++) {
+        recommendedMovieTracker[i] = 0; // Initialize all to 0 (not recommended)
+    }
 
     for (int i = 0; i < MOSTLIKEDMOVIECOUNT; i++) {
         if (recommendedMovies[i] == -1) continue;
+
+        // Skip this movie if it's already recommended in this round
+        if (recommendedMovieTracker[recommendedMovies[i]] == 1) {
+            continue;
+        }
 
         int hasUnratedUsers = 0;
 
@@ -474,15 +483,27 @@ void recommendMovieBasedOnItem(Graph *graph, int itemId) {
             }
         }
 
+        // Mark this movie as recommended
         if (hasUnratedUsers) {
-            printf("\n");
-            free(recommendedMovies);
-            free(users);
-            return;
+            recommendedMovieTracker[recommendedMovies[i]] = 1;
         }
     }
 
-    printf("No recommendation found.\n");
+    // If all movies were already rated, print no recommendation message
+    int allRated = 1;
+    for (int i = 0; i < MOSTLIKEDMOVIECOUNT; i++) {
+        if (recommendedMovies[i] != -1 && recommendedMovieTracker[recommendedMovies[i]] == 0) {
+            allRated = 0;
+            break;
+        }
+    }
+
+    if (allRated) {
+        printf("No recommendation found.\n");
+    }
+    
+    printf("\n");
     free(recommendedMovies);
     free(users);
+    free(recommendedMovieTracker);
 }

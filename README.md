@@ -39,8 +39,5 @@ Dataset: https://grouplens.org/datasets/movielens/
 ```
 ---
 **notes:**  
-
-neural network part is just a demo for several reasons:
-1. ids are in a hiearchieal order, which requires vectorizing so computing capacity.
-2. for a better performance, content based filtering is also required, which is not included in u.data
-3. neural networks are not actually a direct subject of this project.
+1. Matrix factorization neural network is implemented for this project. GNN and NCF are other possible solutions.
+2. Content based recommendation can be included as a further step of this project.

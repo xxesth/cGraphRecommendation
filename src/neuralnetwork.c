@@ -200,10 +200,22 @@ void getTopNRecommendations(MatrixFactorization *model, Graph *graph,
 }
 
 void recommendNeuralNetwork(Graph *graph, int epochs, int userId, int itemId, int n){
+    printf("Bonus: Recommendation with neural network:\n");
+    Node *user = findNode(graph->users, userId);
+    if (user == NULL){
+        printf("User %d not found in the graph.\n", userId);
+        return;
+    }
+
     MatrixFactorization *model = initModel(graph);
     trainModel(model, graph, epochs);
-    float pred = predictRating(model, userId, itemId);
-    printf("Predicted rating for User %d, Item %d: %.2f (New prediction)\n", userId, itemId, pred);
+    if (hasEdge(user, itemId)){
+        printf("User %d has already rated movie %d.\n", userId, itemId);
+    }else{
+        float pred = predictRating(model, userId, itemId);
+        printf("Predicted rating for User %d - Item %d: %.2f (New prediction)\n", userId, itemId, pred);
+    }
+    printf("Recommendations for user %d:\n", userId);
     int recommendations[n];
     getTopNRecommendations(model, graph, userId, n, recommendations);
     for (int i = 0; i < n; i++) {
@@ -211,6 +223,7 @@ void recommendNeuralNetwork(Graph *graph, int epochs, int userId, int itemId, in
                i + 1, recommendations[i],
                predictRating(model, userId, recommendations[i]));
     }
+    printf("\n");
     freeModel(model);
 }
 

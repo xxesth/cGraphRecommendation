@@ -13,7 +13,6 @@ int main() {
     parseDataFile(graph, DATA_ADDRESS); 
     //printGraph(graph);
     
-    //Recommendations
     recommendRandomMovie(graph, RECOMMEND_TO_USER);
     recommendTopRatedMovies(graph, RECOMMEND_TO_USER, NUMBER_OF_MOVIES);
     recommendBasedOnSimilarUser(graph, RECOMMEND_TO_USER, NUMBER_OF_MOVIES);
