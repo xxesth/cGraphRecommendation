@@ -13,5 +13,7 @@ void dijkstra(Graph *graph, int userId, int *distances);
 int findMinDistance(int *distances, int *visited, int totalNodes);
 int *findUsersWithHighRating(Graph *graph, int itemId, int *userCount);
 int *findMostLikedMovies(Graph *graph, int *users, int userCount, int excludeItem, int n);
+float get_recommendation(int userId, int itemId);
+float calculate_error(int userId, int itemId);
 
 #endif

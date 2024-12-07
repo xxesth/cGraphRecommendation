@@ -13,12 +13,12 @@ int main() {
     parseDataFile(graph, DATA_ADDRESS); 
     //printGraph(graph);
     
+    recommendNeuralNetwork(graph, EPOCHS, RECOMMEND_TO_USER, RECOMMEND_FOR_ITEM, NUMBER_OF_MOVIES);
     recommendRandomMovie(graph, RECOMMEND_TO_USER);
     recommendTopRatedMovies(graph, RECOMMEND_TO_USER, NUMBER_OF_MOVIES);
     recommendBasedOnSimilarUser(graph, RECOMMEND_TO_USER, NUMBER_OF_MOVIES);
     recommendClosestMovies(graph, RECOMMEND_TO_USER, NUMBER_OF_MOVIES);
     recommendMovieBasedOnItem(graph, RECOMMEND_FOR_ITEM);
-    recommendNeuralNetwork(graph, EPOCHS, RECOMMEND_TO_USER, RECOMMEND_FOR_ITEM, NUMBER_OF_MOVIES);
     
     freeGraph(graph);
     return 0;
