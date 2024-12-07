@@ -28,6 +28,8 @@ Dataset: https://grouplens.org/datasets/movielens/
 |-- projectdescription.pdf # project requirements 
 |-- ml-100k # data
 |   |-- u.data  # main dataset
+|-- model
+|   |-- trained_model.bin
 |-- src  
 |   |-- graph.c  
 |   |-- graph.h  
