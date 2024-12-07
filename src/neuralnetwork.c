@@ -7,6 +7,7 @@
 #define LEARNING_RATE 0.01
 #define REGULARIZATION 0.02
 #define EMBEDDING_SIZE 10  // Number of latent features
+#define MODEL_PATH "./model/trained_model.bin"
 
 // Initialize embedding vector
 void initEmbedding(EmbeddingVector *vec) {
@@ -224,6 +225,7 @@ void recommendNeuralNetwork(Graph *graph, int epochs, int userId, int itemId, in
                predictRating(model, userId, recommendations[i]));
     }
     printf("\n");
+    saveModel(model, MODEL_PATH);
     freeModel(model);
 }
 
@@ -239,4 +241,84 @@ void freeModel(MatrixFactorization *model) {
     free(model->userIdMap);
     free(model->itemIdMap);
     free(model);
+}
+
+void saveModel(MatrixFactorization *model, const char *filename) {
+    FILE *file = fopen(filename, "wb");
+    if (file == NULL) {
+        printf("Error opening file for writing\n");
+        return;
+    }
+
+    // Save model parameters
+    fwrite(&model->numUsers, sizeof(int), 1, file);
+    fwrite(&model->numItems, sizeof(int), 1, file);
+    fwrite(&model->maxUserId, sizeof(int), 1, file);
+    fwrite(&model->maxItemId, sizeof(int), 1, file);
+    int embeddingSize = EMBEDDING_SIZE;
+    fwrite(&embeddingSize, sizeof(int), 1, file);
+
+    // Save ID mappings
+    fwrite(model->userIdMap, sizeof(int), model->maxUserId + 1, file);
+    fwrite(model->itemIdMap, sizeof(int), model->maxItemId + 1, file);
+
+    // Save user embeddings
+    for (int i = 0; i < model->numUsers; i++) {
+        fwrite(model->userEmbeddings[i].embedding, sizeof(float), EMBEDDING_SIZE, file);
+    }
+
+    // Save item embeddings
+    for (int i = 0; i < model->numItems; i++) {
+        fwrite(model->itemEmbeddings[i].embedding, sizeof(float), EMBEDDING_SIZE, file);
+    }
+
+    fclose(file);
+}
+
+MatrixFactorization* loadModel(const char *filename) {
+    FILE *file = fopen(filename, "rb");
+    if (file == NULL) {
+        printf("Error opening file for reading\n");
+        return NULL;
+    }
+
+    MatrixFactorization *model = malloc(sizeof(MatrixFactorization));
+    int savedEmbeddingSize;
+
+    // Load model parameters
+    fread(&model->numUsers, sizeof(int), 1, file);
+    fread(&model->numItems, sizeof(int), 1, file);
+    fread(&model->maxUserId, sizeof(int), 1, file);
+    fread(&model->maxItemId, sizeof(int), 1, file);
+    fread(&savedEmbeddingSize, sizeof(int), 1, file);
+
+    if (savedEmbeddingSize != EMBEDDING_SIZE) {
+        printf("Error: Saved model has different embedding size\n");
+        free(model);
+        fclose(file);
+        return NULL;
+    }
+
+    // Allocate and load ID mappings
+    model->userIdMap = malloc((model->maxUserId + 1) * sizeof(int));
+    model->itemIdMap = malloc((model->maxItemId + 1) * sizeof(int));
+    fread(model->userIdMap, sizeof(int), model->maxUserId + 1, file);
+    fread(model->itemIdMap, sizeof(int), model->maxItemId + 1, file);
+
+    // Allocate and load user embeddings
+    model->userEmbeddings = malloc(model->numUsers * sizeof(EmbeddingVector));
+    for (int i = 0; i < model->numUsers; i++) {
+        model->userEmbeddings[i].embedding = malloc(EMBEDDING_SIZE * sizeof(float));
+        fread(model->userEmbeddings[i].embedding, sizeof(float), EMBEDDING_SIZE, file);
+    }
+
+    // Allocate and load item embeddings
+    model->itemEmbeddings = malloc(model->numItems * sizeof(EmbeddingVector));
+    for (int i = 0; i < model->numItems; i++) {
+        model->itemEmbeddings[i].embedding = malloc(EMBEDDING_SIZE * sizeof(float));
+        fread(model->itemEmbeddings[i].embedding, sizeof(float), EMBEDDING_SIZE, file);
+    }
+
+    fclose(file);
+    return model;
 }

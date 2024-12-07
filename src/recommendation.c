@@ -9,9 +9,10 @@
 #include "neuralnetwork.h"
 
 #define MOSTLIKEDMOVIECOUNT 5
+#define MODEL_PATH "./model/trained_model.bin"
 
 void recommendRandomMovie(Graph *graph, int userId) {
-    printf("\nSoru 1-\n");
+    printf("\nSoru 1- Random movie (unrated)\n");
     Node *user = findNode(graph->users, userId); 
     if (!user) {
         printf("User ID %d not found!\n", userId);
@@ -61,8 +62,9 @@ void recommendRandomMovie(Graph *graph, int userId) {
     srand(time(NULL)); // Seed the random number generator
     int randomIndex = rand() % unratedCount;
     int recommendedMovie = unratedMovies[randomIndex];
+    float error = calculate_error(userId, recommendedMovie);
 
-    printf("Recommended movie for user %d: Movie ID %d\n", userId, recommendedMovie);
+    printf("Recommended movie for user %d: Movie ID %d. Error: %f\n", userId, recommendedMovie, error);
 
     printf("\n");
     free(unratedMovies);
@@ -136,7 +138,8 @@ void recommendTopRatedMovies(Graph *graph, int userId, int n) {
     printf("Top %d movie recommendations for user %d:\n", n, userId);
     for (int i = 0; i < n; i++) {
         if (topMovies[i][0] != -1) {
-            printf("  Movie ID %d with rating %d\n", topMovies[i][0], topMovies[i][1]);
+            float error = calculate_error(userId, topMovies[i][0]);
+            printf("  Movie ID %d with rating %d. Error: %f\n", topMovies[i][0], topMovies[i][1], error);
         }
     }
 
@@ -253,7 +256,8 @@ void recommendBasedOnSimilarUser(Graph *graph, int userId, int n){
     printf("Top %d movie recommendations for user %d:\n", n, userId);
     for (int i = 0; i < n; i++) {
         if (topMovies[i][0] != -1 && topMovies[i][1] != 0) {
-            printf("  Movie ID %d with rating %d\n", topMovies[i][0], topMovies[i][1]);
+            float error = calculate_error(userId, topMovies[i][0]);
+            printf("Movie ID %d with rating %d. Error: %f\n", topMovies[i][0], topMovies[i][1], error);
         }
         else{
             break;
@@ -368,7 +372,8 @@ void recommendClosestMovies(Graph *graph, int userId, int n) {
     // Recommend top `n` movies
     printf("Closest movies for user %d:\n", userId);
     for (int i = 0; i < n && i < count; i++) {
-        printf("Movie ID: %d, Distance: %d\n", movieDistances[i][0], movieDistances[i][1]);
+        float error = calculate_error(userId, movieDistances[i][0]);
+        printf("Movie ID: %d, Distance: %d, Error: %f\n", movieDistances[i][0], movieDistances[i][1], error);
         free(movieDistances[i]);
     }
 
@@ -426,6 +431,7 @@ int *findMostLikedMovies(Graph *graph, int *users, int userCount, int excludeIte
             }
         }
         if (mostLikedMovie != -1) {
+            //printf("most liked movie: %d\n", mostLikedMovie);
             topMovies[i] = mostLikedMovie;
             movieLikes[mostLikedMovie] = 0; // Mark as processed
         }
@@ -478,7 +484,8 @@ void recommendMovieBasedOnItem(Graph *graph, int itemId) {
             }
 
             if (!hasRated) {
-                printf("Movie %d is recommended for User %d.\n", recommendedMovies[i], users[j]);
+                float error = calculate_error(users[j], recommendedMovies[i]);
+                printf("Movie %d is recommended for User %d. Error: %f\n", recommendedMovies[i], users[j], error);
                 hasUnratedUsers = 1;
             }
         }
@@ -506,4 +513,25 @@ void recommendMovieBasedOnItem(Graph *graph, int itemId) {
     free(recommendedMovies);
     free(users);
     free(recommendedMovieTracker);
+}
+
+float get_recommendation(int userId, int itemId){
+    static MatrixFactorization* model = NULL;
+
+    // Load model if not already loaded
+    if (model == NULL) {
+        model = loadModel(MODEL_PATH);
+        if (model == NULL) {
+            return -1; // or some error value
+        }
+    }
+
+    return predictRating(model, userId, itemId);
+}
+
+float calculate_error(int userId, int itemId){
+    float predicted = get_recommendation(userId, itemId);
+    float error = (5-predicted)/5;
+
+    return error;
 }
