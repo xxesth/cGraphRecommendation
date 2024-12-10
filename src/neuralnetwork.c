@@ -115,7 +115,7 @@ float predictRating(MatrixFactorization *model, int userId, int itemId) {
         model->itemEmbeddings[itemIndex].embedding
     );
     
-    if (pred < 1.0f) pred = 1.0f;
+    if (pred < 1.0f) pred = 1.0f; // f is used to avoid type casting
     if (pred > 5.0f) pred = 5.0f;
     
     return pred;

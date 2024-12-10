@@ -535,3 +535,88 @@ float calculate_error(int userId, int itemId){
 
     return error;
 }
+
+// Count the number of edges for a node
+int countEdges(Node* node) {
+    int count = 0;
+    Edge* current = node->edges;
+    while (current != NULL) {
+        count++;
+        current = current->nextEdge;
+    }
+    return count;
+}
+
+// Get a random edge from a node's edge list
+Edge* getRandomEdge(Node* node) {
+    int edgeCount = countEdges(node);
+    if (edgeCount == 0) return NULL;
+
+    // Generate random index
+    int randomIndex = rand() % edgeCount;
+
+    // Traverse to the randomly selected edge
+    Edge* current = node->edges;
+    for (int i = 0; i < randomIndex; i++) {
+        current = current->nextEdge;
+    }
+    return current;
+}
+
+// Perform random walk starting from a given node
+Node* randomWalk(Graph* graph, Node* startNode, int walkLength, float alpha) {
+    if (startNode == NULL || graph == NULL) return NULL;
+    
+    Node* currentNode = startNode;
+    Node* currentItem = NULL;
+    
+    // Always end on an item node after walkLength steps
+    for (int step = 0; step < walkLength; step++) {
+        // Random restart with probability alpha
+        if ((float)rand() / RAND_MAX < alpha) {
+            currentNode = startNode;
+            continue;
+        }
+        
+        Edge* randomEdge = getRandomEdge(currentNode);
+        if (randomEdge == NULL) break;
+        
+        // If we're at a user node, move to an item
+        if (currentNode == startNode || currentNode->id == randomEdge->userId) {
+            currentItem = findNode(graph->items, randomEdge->itemId);
+            currentNode = currentItem;
+        }
+        // If we're at an item node, move to a user
+        else {
+            Node* nextUser = findNode(graph->users, randomEdge->userId);
+            currentNode = nextUser;
+            // Don't update currentItem as we want to keep track of last item visited
+        }
+    }
+    
+    // If we end on a user or haven't moved, try one more step to get to an item
+    if (currentNode == startNode || currentNode->id == startNode->id) {
+        Edge* finalEdge = getRandomEdge(currentNode);
+        if (finalEdge != NULL) {
+            currentItem = findNode(graph->items, finalEdge->itemId);
+        }
+    }
+    
+    return currentItem;  // Return the last item visited
+}
+
+void recommendRandomWalk(Graph* graph, int userId){
+    printf("Extra- Random Walk:\n");
+    srand(time(NULL));
+    int walkLength = 10; // length of random walk
+    float alpha = 0.15;     // restart probabiltiy
+    
+    // Start random walk from a user node
+    Node* startNode = findNode(graph->users, userId);
+    Node* endNode = randomWalk(graph, startNode, walkLength, alpha);
+    
+    if (endNode != NULL) {
+        printf("Random walk ended at node %d\n", endNode->id);
+    }
+    printf("\n");
+}
