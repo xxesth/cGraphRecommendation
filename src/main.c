@@ -19,6 +19,7 @@ int main() {
     recommendBasedOnSimilarUser(graph, RECOMMEND_TO_USER, NUMBER_OF_MOVIES);
     recommendClosestMovies(graph, RECOMMEND_TO_USER, NUMBER_OF_MOVIES);
     recommendMovieBasedOnItem(graph, RECOMMEND_FOR_ITEM);
+    recommendRandomWalk(graph, RECOMMEND_TO_USER);
     
     freeGraph(graph);
     return 0;
