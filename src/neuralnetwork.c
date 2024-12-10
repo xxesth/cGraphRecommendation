@@ -201,7 +201,7 @@ void getTopNRecommendations(MatrixFactorization *model, Graph *graph,
 }
 
 void recommendNeuralNetwork(Graph *graph, int epochs, int userId, int itemId, int n){
-    printf("Bonus: Recommendation with neural network:\n");
+    printf("\nBonus: Recommendation with neural network:\n");
     Node *user = findNode(graph->users, userId);
     if (user == NULL){
         printf("User %d not found in the graph.\n", userId);
