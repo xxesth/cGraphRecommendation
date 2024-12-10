@@ -501,12 +501,13 @@ void recommendMovieBasedOnItem(Graph *graph, int itemId) {
     for (int i = 0; i < MOSTLIKEDMOVIECOUNT; i++) {
         if (recommendedMovies[i] != -1 && recommendedMovieTracker[recommendedMovies[i]] == 0) {
             allRated = 0;
+            printf("No possible recommendations.\n");
             break;
         }
     }
 
     if (allRated) {
-        printf("No recommendation found.\n");
+        printf("No more recommendation is found.\n");
     }
     
     printf("\n");
@@ -616,7 +617,7 @@ void recommendRandomWalk(Graph* graph, int userId){
     Node* endNode = randomWalk(graph, startNode, walkLength, alpha);
     
     if (endNode != NULL) {
-        printf("Random walk ended at node %d\n", endNode->id);
+        printf("Random walk started at user %d, ended at item %d\n", userId, endNode->id);
     }
     printf("\n");
 }
