@@ -1,3 +1,6 @@
+# nn model - to avoid updating each time
+model/
+
 # debug files
 debug
 
