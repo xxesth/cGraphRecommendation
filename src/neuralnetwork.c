@@ -201,6 +201,8 @@ void getTopNRecommendations(MatrixFactorization *model, Graph *graph,
 }
 
 void recommendNeuralNetwork(Graph *graph, int epochs, int userId, int itemId, int n){
+    printf("\nThe error is determined based on the predictions of the neural network model, where a value of 0 represents the most accurate prediction, and a value of 1 indicates the least accurate prediction.\n\n");
+
     printf("\nBonus: Recommendation with neural network:\n");
     Node *user = findNode(graph->users, userId);
     if (user == NULL){
