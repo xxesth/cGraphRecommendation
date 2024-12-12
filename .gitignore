@@ -1,6 +1,7 @@
 # nn model - to avoid updating each time
 model/
-# git update-index --assume-unchanged model/*
+# ignore updates in model folder: git update-index --assume-unchanged model/*
+# undo: git update-index --no-assume-unchanged model/*
 
 # debug files
 debug
