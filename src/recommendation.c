@@ -8,7 +8,6 @@
 #include "recommendation.h"
 #include "neuralnetwork.h"
 
-#define MOSTLIKEDMOVIECOUNT 5
 #define MODEL_PATH "./model/trained_model.bin"
 
 void recommendRandomMovie(Graph *graph, int userId) {
@@ -354,6 +353,7 @@ void recommendClosestMovies(Graph *graph, int userId, int n) {
             movieDistances[count] = malloc(2 * sizeof(int));
             movieDistances[count][0] = i + 1;        // Movie ID
             movieDistances[count][1] = distances[i]; // Distance
+            printf("%d ", distances[i]);
             count++;
         }
     }
@@ -441,7 +441,7 @@ int *findMostLikedMovies(Graph *graph, int *users, int userCount, int excludeIte
     return topMovies;
 }
 
-void recommendMovieBasedOnItem(Graph *graph, int itemId) {
+void recommendMovieBasedOnItem(Graph *graph, int itemId, int mostlikedmoviecount) {
     printf("Soru 5-\n");
     int userCount = 0;
     int *users = findUsersWithHighRating(graph, itemId, &userCount);
@@ -452,13 +452,13 @@ void recommendMovieBasedOnItem(Graph *graph, int itemId) {
         return;
     }
 
-    int *recommendedMovies = findMostLikedMovies(graph, users, userCount, itemId, MOSTLIKEDMOVIECOUNT);
+    int *recommendedMovies = findMostLikedMovies(graph, users, userCount, itemId, mostlikedmoviecount);
     int *recommendedMovieTracker = malloc((countNodes(graph->items) + 1) * sizeof(int)); // To track recommended movies
     for (int i = 0; i <= countNodes(graph->items); i++) {
         recommendedMovieTracker[i] = 0; // Initialize all to 0 (not recommended)
     }
 
-    for (int i = 0; i < MOSTLIKEDMOVIECOUNT; i++) {
+    for (int i = 0; i < mostlikedmoviecount; i++) {
         if (recommendedMovies[i] == -1) continue;
 
         // Skip this movie if it's already recommended in this round
@@ -498,7 +498,7 @@ void recommendMovieBasedOnItem(Graph *graph, int itemId) {
 
     // If all movies were already rated, print no recommendation message
     int allRated = 1;
-    for (int i = 0; i < MOSTLIKEDMOVIECOUNT; i++) {
+    for (int i = 0; i < mostlikedmoviecount; i++) {
         if (recommendedMovies[i] != -1 && recommendedMovieTracker[recommendedMovies[i]] == 0) {
             allRated = 0;
             if (i==0){
