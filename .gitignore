@@ -1,5 +1,6 @@
 # nn model - to avoid updating each time
 model/
+# git update-index --assume-unchanged model/*
 
 # debug files
 debug
