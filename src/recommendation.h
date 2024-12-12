@@ -8,7 +8,7 @@ void recommendTopRatedMovies(Graph *graph, int userId, int n);
 void recommendBasedOnSimilarUser(Graph *graph, int userId, int n);
 void recommendClosestMovies(Graph *graph, int userId, int n);
 void recommendMovieBasedOnItem(Graph *graph, int itemId, int mostlikedmoviecount);
-void recommendRandomWalk(Graph* graph, int userId);
+void recommendRandomWalk(Graph* graph, int userId, int walkLength, float alpha);
 
 void dijkstra(Graph *graph, int userId, int *distances);
 int findMinDistance(int *distances, int *visited, int totalNodes);

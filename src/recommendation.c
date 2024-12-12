@@ -353,7 +353,7 @@ void recommendClosestMovies(Graph *graph, int userId, int n) {
             movieDistances[count] = malloc(2 * sizeof(int));
             movieDistances[count][0] = i + 1;        // Movie ID
             movieDistances[count][1] = distances[i]; // Distance
-            printf("%d ", distances[i]);
+            // printf("%d ", distances[i]); TEST
             count++;
         }
     }
@@ -534,7 +534,7 @@ float get_recommendation(int userId, int itemId){
 
 float calculate_error(int userId, int itemId){
     float predicted = get_recommendation(userId, itemId);
-    float error = (5-predicted)/5;
+    float error = (5-predicted)/4;
 
     return error;
 }
@@ -608,11 +608,11 @@ Node* randomWalk(Graph* graph, Node* startNode, int walkLength, float alpha) {
     return currentItem;  // Return the last item visited
 }
 
-void recommendRandomWalk(Graph* graph, int userId){
+void recommendRandomWalk(Graph* graph, int userId, int walkLength, float alpha){
     printf("Extra- Random Walk:\n");
     srand(time(NULL));
-    int walkLength = 10; // length of random walk
-    float alpha = 0.15;     // restart probabiltiy
+    //int walkLength = 10; // length of random walk
+    //float alpha = 0.15;     // restart probabiltiy
     
     // Start random walk from a user node
     Node* startNode = findNode(graph->users, userId);
