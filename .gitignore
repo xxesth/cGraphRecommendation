@@ -3,6 +3,9 @@ model/
 # ignore updates in model folder: git update-index --assume-unchanged model/*
 # undo: git update-index --no-assume-unchanged model/*
 
+# dataset
+ml-100k/
+
 # debug files
 debug
 
