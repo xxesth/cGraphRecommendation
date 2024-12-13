@@ -9,7 +9,7 @@ Dataset: https://grouplens.org/datasets/movielens/
 ### to run:  
 1. ```git clone https://github.com/xxesth/cGraphRecommendation.git```
 2. ```cd cGraphRecommendation```
-3. download [dataset](https://files.grouplens.org/datasets/movielens/ml-100k.zip), extract and move to the project directory
+3. download [dataset](https://files.grouplens.org/datasets/movielens/ml-100k.zip), extract and move it to the project directory
 4. ```make```
 5. ```./build/run```
   
@@ -17,7 +17,7 @@ Dataset: https://grouplens.org/datasets/movielens/
 1. ``gcc -g -o debug src/main.c src/graph.c src/recommendation.c src/neuralnetwork.c -lm``
 2. ``gdb ./debug``
 3. ``(gdb) run``
-4. ``(gdb) backtrace``
+4. ``(gdb) backtrace`` or ``(gdb) print X``
 
 ---
 ```bash
