@@ -26,7 +26,8 @@ Dataset: https://grouplens.org/datasets/movielens/
 |-- Makefile 
 |-- README.md  
 |-- .gitignore
-|-- projectdescription.pdf # project requirements 
+|-- projectdescription.pdf
+|-- projectreport.pdf
 |-- ml-100k # data
 |   |-- u.data  # main dataset
 |-- model
