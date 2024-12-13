@@ -9,8 +9,9 @@ Dataset: https://grouplens.org/datasets/movielens/
 ### to run:  
 1. ```git clone https://github.com/xxesth/cGraphRecommendation.git```
 2. ```cd cGraphRecommendation```
-3. ```make```
-4. ```./build/run```
+3. download [dataset](https://files.grouplens.org/datasets/movielens/ml-100k.zip), extract and move to the project directory
+4. ```make```
+5. ```./build/run```
   
 ### to debug:  
 1. ``gcc -g -o debug src/main.c src/graph.c src/recommendation.c src/neuralnetwork.c -lm``
